@@ -1,9 +1,10 @@
 from PySide6.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QGridLayout
 from asteval import Interpreter
 import sys
-from math import sqrt, log, log10, factorial
+from math import sqrt, log, log10, factorial, sin, cos, tan, asin, acos, atan, radians, degrees
 
 ans = "0"
+deg_mode = True # Standart True
 
 def finde_ausdruck_vor_fakultaet(text, pos):
     i = pos - 1
@@ -31,6 +32,34 @@ def finde_ausdruck_vor_fakultaet(text, pos):
     end = pos
 
     return (start, end)
+
+def trig_klammer_zu(ausdruck):
+    pos = 0
+    while True:
+        idx = ausdruck.find("radians(", pos)
+        if idx == -1:
+            break
+        
+        klammer_start = idx + len("radians(")
+        klammer_anzahl = 1
+        i = klammer_start
+
+        while i < len(ausdruck) and klammer_anzahl > 0:
+            if ausdruck[i] == "(":
+                klammer_anzahl += 1
+            elif ausdruck[i] == ")":
+                klammer_anzahl -= 1
+            i += 1
+        
+
+        ausdruck = ausdruck[:i] + ")" + ausdruck[i:]
+        
+        pos = i + 1
+    
+    return ausdruck
+
+
+
 
 def button_gedrueckt(text, anzeige):
     global ans
@@ -78,6 +107,48 @@ def button_gedrueckt(text, anzeige):
             anzeige.setText(text)
         else:
             anzeige.setText(aktuell + text)
+    elif text == "sin":
+        text = "sin("
+        aktuell = anzeige.text()
+        if aktuell in ("0", "Syntax Error"):
+            anzeige.setText(text)
+        else:
+            anzeige.setText(aktuell + text)
+    elif text == "cos":
+        text = "cos("
+        aktuell = anzeige.text()
+        if aktuell in ("0", "Syntax Error"):
+            anzeige.setText(text)
+        else:
+            anzeige.setText(aktuell + text)
+    elif text == "tan":
+        text = "tan("
+        aktuell = anzeige.text()
+        if aktuell in ("0", "Syntax Error"):
+            anzeige.setText(text)
+        else:
+            anzeige.setText(aktuell + text)
+    elif text == "sin⁻¹":
+        text = "sin⁻¹("
+        aktuell = anzeige.text()
+        if aktuell in ("0", "Syntax Error"):
+            anzeige.setText(text)
+        else:
+            anzeige.setText(aktuell + text)
+    elif text == "cos⁻¹":
+        text = "cos⁻¹("
+        aktuell = anzeige.text()
+        if aktuell in ("0", "Syntax Error"):
+            anzeige.setText(text)
+        else:
+            anzeige.setText(aktuell + text)
+    elif text == "tan⁻¹":
+        text = "tan⁻¹("
+        aktuell = anzeige.text()
+        if aktuell in ("0", "Syntax Error"):
+            anzeige.setText(text)
+        else:
+            anzeige.setText(aktuell + text)
     elif text == "⌫":
         aktuell = anzeige.text()
 
@@ -86,15 +157,20 @@ def button_gedrueckt(text, anzeige):
 
         for muster in spezial_muster:
             if aktuell.endswith(muster):
-                anzeige.setText(aktuell[:-len(muster)])
+                neu = aktuell[:-len(muster)]
+                anzeige.setText(neu if neu else "0")
                 gefunden = True
                 break
+
 
         if not gefunden:
             if aktuell not in ("0", "Syntax Error", "Math Error!", "Error!") and len(aktuell) > 1:
                 anzeige.setText(aktuell[:-1])
+                if aktuell == "":
+                    anzeige.setText("0")
             else:
                 anzeige.setText("0")
+
 
     elif text == "=":
         try:
@@ -118,6 +194,12 @@ def button_gedrueckt(text, anzeige):
             aeval.symtable["sqrt"] = sqrt
             aeval.symtable["log"] = log
             aeval.symtable["log10"] = log10
+            aeval.symtable["sin"] = sin
+            aeval.symtable["cos"] = cos
+            aeval.symtable["tan"] = tan
+            aeval.symtable["asin"] = asin
+            aeval.symtable["acos"] = acos
+            aeval.symtable["atan"] = atan
 
             ausdruck = ausdruck.replace("^", "**")
             ausdruck = ausdruck.replace("ANS", ans)
@@ -130,6 +212,21 @@ def button_gedrueckt(text, anzeige):
             ausdruck = ausdruck.replace(",", ".") 
             ausdruck = ausdruck.replace("π", "3.141592653589793")
             ausdruck = ausdruck.replace("e", "2.718281828459045")
+            
+            if deg_mode == False:
+                ausdruck = ausdruck.replace("sin(", "sin(radians(")
+                ausdruck = ausdruck.replace("cos(", "cos(radians(")
+                ausdruck = ausdruck.replace("tan(", "tan(radians(")
+                ausdruck = ausdruck.replace("sin⁻¹(", "asin(radians(")
+                ausdruck = ausdruck.replace("cos⁻¹(", "acos(radians(")
+                ausdruck = ausdruck.replace("tan⁻¹(", "atan(radians(")
+                
+                ausdruck = trig_klammer_zu(ausdruck)
+            else:
+                ausdruck = ausdruck.replace("sin⁻¹(", "asin(")
+                ausdruck = ausdruck.replace("cos⁻¹(", "acos(")
+                ausdruck = ausdruck.replace("tan⁻¹(", "atan(")
+
             ergebnis = str(aeval(ausdruck))
             ans = ergebnis
             if ergebnis == "None":
@@ -164,14 +261,15 @@ def main():
     layout.addWidget(anzeige, 0, 0, 1, 3)
 
     btns = [
-        ("7", 1, 0),   ("8", 1, 1),   ("9", 1, 2),   ("+", 1, 3),
-        ("4", 2, 0),   ("5", 2, 1),   ("6", 2, 2),   ("-", 2, 3),
-        ("1", 3, 0),   ("2", 3, 1),   ("3", 3, 2),   ("*", 3, 3),
-        ("0", 4, 0),   ("(", 4, 1),   (")", 4, 2),   ("/", 4, 3),
-        ("^", 5, 0),   ("x²", 5, 1),  ("x⁻¹", 5, 2), ("√", 5, 3),
-        ("log", 6, 0), ("ln", 6, 1),  ("%", 6, 2),   ("!", 6, 3),
-        ("π", 7, 0),   ("e", 7, 1),
-        ("ANS", 8, 0), ("C", 8, 1),   ("⌫", 8, 2),   ("=", 8, 3)
+        ("7",     1, 0), ("8",     1, 1), ("9",     1, 2), ("+", 1, 3),
+        ("4",     2, 0), ("5",     2, 1), ("6",     2, 2), ("-", 2, 3),
+        ("1",     3, 0), ("2",     3, 1), ("3",     3, 2), ("*", 3, 3),
+        ("0",     4, 0), ("(",     4, 1), (")",     4, 2), ("/", 4, 3),
+        ("^",     5, 0), ("x²",    5, 1), ("x⁻¹",   5, 2), ("√", 5, 3),
+        ("log",   6, 0), ("ln",    6, 1), ("%",     6, 2), ("!", 6, 3),
+        ("sin",   7, 0), ("cos",   7, 1), ("tan",   7, 2), ("π", 7, 3), 
+        ("sin⁻¹", 8, 0), ("cos⁻¹", 8, 1), ("tan⁻¹", 8, 2), ("e", 8, 3),
+        ("ANS",   9, 0), ("C",     9, 1), ("⌫",     9, 2), ("=", 9, 3)
     ]
 
     for text, row, col in btns:
