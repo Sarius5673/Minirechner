@@ -1,4 +1,19 @@
-venv/
+# Python
 __pycache__/
 *.pyc
-.DS_Store
+
+# PyInstaller
+dist/
+build/
+*.spec
+
+# Virtuelle Umgebungen
+venv/
+.venv/
+
+# IDEs
+.vscode/
+.idea/
+
+# Sonstiges
+*.log

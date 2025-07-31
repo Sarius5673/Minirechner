@@ -218,28 +218,26 @@ def finde_ausdruck_vor_fakultaet(text, pos):
     return (start, end)
 
 def trig_klammer_zu(ausdruck):
-    pos = 0
-    while True:
-        idx = ausdruck.find("radians(", pos)
-        if idx == -1:
-            break
-        
-        klammer_start = idx + len("radians(")
-        klammer_anzahl = 1
-        i = klammer_start
+    for func in ["radians(", "degrees("]:
+        pos = 0
+        while True:
+            idx = ausdruck.find(func, pos)
+            if idx == -1:
+                break
 
-        while i < len(ausdruck) and klammer_anzahl > 0:
-            if ausdruck[i] == "(":
-                klammer_anzahl += 1
-            elif ausdruck[i] == ")":
-                klammer_anzahl -= 1
-            i += 1
-        
+            klammer_start = idx + len(func)
+            klammer_anzahl = 1
+            i = klammer_start
 
-        ausdruck = ausdruck[:i] + ")" + ausdruck[i:]
-        
-        pos = i + 1
-    
+            while i < len(ausdruck) and klammer_anzahl > 0:
+                if ausdruck[i] == "(":
+                    klammer_anzahl += 1
+                elif ausdruck[i] == ")":
+                    klammer_anzahl -= 1
+                i += 1
+
+            ausdruck = ausdruck[:i] + ")" + ausdruck[i:]
+            pos = i + 1
     return ausdruck
 
 
@@ -399,13 +397,13 @@ def button_gedrueckt(text, anzeige):
             ausdruck = ausdruck.replace("π", "3.141592653589793")
             ausdruck = ausdruck.replace("e", "2.718281828459045")
             
-            if deg_mode == False:
+            if deg_mode:
                 ausdruck = ausdruck.replace("sin(", "sin(radians(")
                 ausdruck = ausdruck.replace("cos(", "cos(radians(")
                 ausdruck = ausdruck.replace("tan(", "tan(radians(")
-                ausdruck = ausdruck.replace("sin⁻¹(", "asin(")
-                ausdruck = ausdruck.replace("cos⁻¹(", "acos(")
-                ausdruck = ausdruck.replace("tan⁻¹(", "atan(")
+                ausdruck = ausdruck.replace("sin⁻¹(", "degrees(asin(")
+                ausdruck = ausdruck.replace("cos⁻¹(", "degrees(acos(")
+                ausdruck = ausdruck.replace("tan⁻¹(", "degrees(atan(")
                 
                 ausdruck = trig_klammer_zu(ausdruck)
             else:
@@ -442,7 +440,7 @@ def main():
 
     window = QWidget()
     window.setWindowTitle("Calculator")
-    window.setFixedSize(400, 500)
+    window.setFixedSize(450, 600)
 
     einstellungen = QWidget()
     einstellungen.setWindowTitle("Settings")
