@@ -1,10 +1,194 @@
-from PySide6.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QGridLayout
+from PySide6.QtWidgets import QApplication, QWidget, QPushButton, QLabel, QGridLayout, QCheckBox, QDialog, QVBoxLayout, QComboBox
+from PySide6.QtCore import QSettings
 from asteval import Interpreter
 import sys
 from math import sqrt, log, log10, factorial, sin, cos, tan, asin, acos, atan, radians, degrees
 
+light_theme = """
+/* Light Theme */
+QWidget {
+    background-color: #f5f5f5;
+    color: #222831;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 15px;
+}
+QPushButton {
+    background-color: #e0e0e0;
+    border: 1px solid #bdbdbd;
+    border-radius: 6px;
+    padding: 10px;
+    color: #222831;
+}
+QPushButton:hover {
+    background-color: #bdbdbd;
+}
+QPushButton:pressed {
+    background-color: #9e9e9e;
+}
+QLabel#DisplayLabel {
+    font-size: 26px;
+    background-color: #ffffff;
+    padding: 18px;
+    border-radius: 8px;
+    qproperty-alignment: AlignRight;
+    color: #222831;
+}
+QCheckBox {
+    padding: 6px;
+}
+"""
+
+grey_theme = """
+/* Grey Theme */
+QWidget {
+    background-color: #424242;
+    color: #f5f5f5;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 15px;
+}
+QPushButton {
+    background-color: #616161;
+    border: 1px solid #757575;
+    border-radius: 6px;
+    padding: 10px;
+    color: #f5f5f5;
+}
+QPushButton:hover {
+    background-color: #757575;
+}
+QPushButton:pressed {
+    background-color: #212121;
+}
+QLabel#DisplayLabel {
+    font-size: 26px;
+    background-color: #333333;
+    padding: 18px;
+    border-radius: 8px;
+    qproperty-alignment: AlignRight;
+    color: #f5f5f5;
+}
+QCheckBox {
+    padding: 6px;
+}
+"""
+
+dark_theme = """
+/* Dark Theme */
+QWidget {
+    background-color: #181818;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 15px;
+}
+QPushButton {
+    background-color: #232323;
+    border: 1px solid #333333;
+    border-radius: 6px;
+    padding: 10px;
+    color: #e0e0e0;
+}
+QPushButton:hover {
+    background-color: #333333;
+}
+QPushButton:pressed {
+    background-color: #111111;
+}
+QLabel#DisplayLabel {
+    font-size: 26px;
+    background-color: #222222;
+    padding: 18px;
+    border-radius: 8px;
+    qproperty-alignment: AlignRight;
+    color: #e0e0e0;
+}
+QCheckBox {
+    padding: 6px;
+}
+"""
+
 ans = "0"
-deg_mode = True # Standart True
+deg_mode = True # True = degree, False = radiant; Standart = True
+theme = 0 # 0 = light mode, 1 = grey mode, 2 = dark mode; Standart = 0
+
+from PySide6.QtWidgets import QRadioButton, QButtonGroup
+
+def einstellungen_oeffnen(parent, app):
+    global deg_mode, theme
+
+    dialog = QDialog(parent)
+    dialog.setWindowTitle("Einstellungen")
+    dialog.setFixedSize(320, 270)
+
+    layout = QVBoxLayout(dialog)
+
+    label_winkel = QLabel("Winkelmodus:")
+    layout.addWidget(label_winkel)
+
+    
+    grad_radio = QRadioButton("Grad")
+    rad_radio = QRadioButton("Radiant")
+
+    gruppe = QButtonGroup(dialog)
+    gruppe.addButton(grad_radio)
+    gruppe.addButton(rad_radio)
+
+    if deg_mode:
+        grad_radio.setChecked(True)
+    else:
+        rad_radio.setChecked(True)
+
+    layout.addWidget(grad_radio)
+    layout.addWidget(rad_radio)
+
+    label_design = QLabel("Design:")
+    layout.addWidget(label_design)
+
+    combo = QComboBox()
+    combo.addItem("Light Mode")
+    combo.addItem("Grey Mode")
+    combo.addItem("Dark Mode")
+    layout.addWidget(combo)
+
+    if theme == 2:
+        combo.setCurrentText("Dark Mode")
+    elif theme == 1:
+        combo.setCurrentText("Grey Mode")
+    else:
+        combo.setCurrentText("Light Mode")
+
+
+    def speichern():
+        global deg_mode, theme
+        
+        deg_mode = grad_radio.isChecked()
+        dialog.accept()
+
+        theme_text = combo.currentText()
+        if theme_text == "Dark Mode":
+            app.setStyleSheet(dark_theme)
+            theme = 2
+        elif theme_text == "Grey Mode":
+            app.setStyleSheet(grey_theme)
+            theme = 1
+        else:
+            app.setStyleSheet(light_theme)
+            theme = 0
+
+
+
+
+    speichern_btn = QPushButton("Speichern")
+    if theme == 2:  # dark
+        speichern_btn.setStyleSheet("color: #e0e0e0; background-color: #232323; border-radius: 6px; padding: 10px;")
+    elif theme == 1:  # grey
+        speichern_btn.setStyleSheet("color: #f5f5f5; background-color: #616161; border-radius: 6px; padding: 10px;")
+    else:  # light
+        speichern_btn.setStyleSheet("color: #222831; background-color: #e0e0e0; border-radius: 6px; padding: 10px;")
+    speichern_btn.clicked.connect(speichern)
+
+    layout.addWidget(speichern_btn)
+    dialog.setLayout(layout)
+    dialog.exec()
 
 def finde_ausdruck_vor_fakultaet(text, pos):
     i = pos - 1
@@ -173,6 +357,8 @@ def button_gedrueckt(text, anzeige):
 
 
     elif text == "=":
+        global deg_mode
+        
         try:
             aeval = Interpreter()
             ausdruck = anzeige.text()
@@ -217,9 +403,9 @@ def button_gedrueckt(text, anzeige):
                 ausdruck = ausdruck.replace("sin(", "sin(radians(")
                 ausdruck = ausdruck.replace("cos(", "cos(radians(")
                 ausdruck = ausdruck.replace("tan(", "tan(radians(")
-                ausdruck = ausdruck.replace("sin⁻¹(", "asin(radians(")
-                ausdruck = ausdruck.replace("cos⁻¹(", "acos(radians(")
-                ausdruck = ausdruck.replace("tan⁻¹(", "atan(radians(")
+                ausdruck = ausdruck.replace("sin⁻¹(", "asin(")
+                ausdruck = ausdruck.replace("cos⁻¹(", "acos(")
+                ausdruck = ausdruck.replace("tan⁻¹(", "atan(")
                 
                 ausdruck = trig_klammer_zu(ausdruck)
             else:
@@ -247,17 +433,33 @@ def button_gedrueckt(text, anzeige):
         else:
             anzeige.setText(aktuell + text)
     
-
 def main():
     app = QApplication(sys.argv)
 
+    settings = QSettings("Minirechner", "Settings")
+    global theme
+    theme = int(settings.value("theme", 0))
+
     window = QWidget()
-    window.setWindowTitle("Mein Taschenrechner")
-    window.setFixedSize(300, 400)
+    window.setWindowTitle("Calculator")
+    window.setFixedSize(400, 500)
+
+    einstellungen = QWidget()
+    einstellungen.setWindowTitle("Settings")
+    einstellungen.setFixedSize(300, 300)
+    
 
     layout = QGridLayout()
 
+    einstellungs_btn = QPushButton("⚙")
+    einstellungs_btn.clicked.connect(lambda: einstellungen_oeffnen(window, app))
+    layout.addWidget(einstellungs_btn, 0, 3)  # z. B. in Spalte 3 ganz oben
+
+
     anzeige = QLabel("0")
+    anzeige.setObjectName("DisplayLabel")
+    anzeige.setMinimumHeight(50)
+
     layout.addWidget(anzeige, 0, 0, 1, 3)
 
     btns = [
@@ -279,6 +481,17 @@ def main():
 
     window.setLayout(layout)
     window.show()
+
+    if theme == 2:
+        app.setStyleSheet(dark_theme)
+    elif theme == 1:
+        app.setStyleSheet(grey_theme)
+    else:
+        app.setStyleSheet(light_theme)
+
+    def save_settings():
+        settings.setValue("theme", theme)
+    app.aboutToQuit.connect(save_settings)
 
     sys.exit(app.exec())
 
