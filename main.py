@@ -451,7 +451,7 @@ def main():
 
     einstellungs_btn = QPushButton("⚙")
     einstellungs_btn.clicked.connect(lambda: einstellungen_oeffnen(window, app))
-    layout.addWidget(einstellungs_btn, 0, 3)  # z. B. in Spalte 3 ganz oben
+    layout.addWidget(einstellungs_btn, 0, 3)
 
 
     anzeige = QLabel("0")
