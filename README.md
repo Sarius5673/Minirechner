@@ -18,6 +18,8 @@
 
 - Python 3.8 oder neuer
 - [pip](https://pip.pypa.io/en/stable/)
+- PySide6
+- asteval
 
 #### 1. Repository klonen
 
